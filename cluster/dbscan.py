@@ -1,0 +1,2 @@
+class DBSCAN(object):
+    pass
