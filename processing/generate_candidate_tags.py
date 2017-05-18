@@ -6,12 +6,12 @@ from utils.corenlp import StanfordCoreNLP
 
 def sort_by_position(words):
     sorted_words = sorted(words.items(), key=operator.itemgetter(1))
-    words = ''.join(dict(sorted_words).keys())
+    words = ','.join(dict(sorted_words).keys())
+    return words
 
-    return
 
-def extract_candidate_tags(deps):
-    candidate_tags = []
+def extract_candidate_tag(deps):
+    candidate_tag = []
 
     for i, dep in enumerate(deps):
         if dep['dep'] == 'nsubj':
@@ -25,7 +25,7 @@ def extract_candidate_tags(deps):
                         words[temp['dependentGloss']] = temp['dependent']
                 if len(words) > 0:
                     sentence = sort_by_position(words)
-                    candidate_tags.append(sentence)
+                    candidate_tag.append(sentence)
             elif(i<len(deps)-1 and deps[i+1]['dep']=='advmod'):
                 words = {}
                 for j in range(2):
@@ -36,7 +36,7 @@ def extract_candidate_tags(deps):
                         words[temp['dependentGloss']] = temp['dependent']
                 if len(words) > 0:
                     sentence = sort_by_position(words)
-                    candidate_tags.append(sentence)
+                    candidate_tag.append(sentence)
         elif(dep['dep']=='advmod'):
             if(i<len(deps)-1 and deps[i+1]['dep']=='advmod'):
                 words = {}
@@ -48,7 +48,7 @@ def extract_candidate_tags(deps):
                         words[temp['dependentGloss']] = temp['dependent']
                 if len(words) > 0:
                     sentence = sort_by_position(words)
-                    candidate_tags.append(sentence)
+                    candidate_tag.append(sentence)
             elif(i<len(deps)-1 and deps[i+1]['dep']=='amod'):
                 words = {}
                 for j in range(2):
@@ -59,7 +59,7 @@ def extract_candidate_tags(deps):
                         words[temp['dependentGloss']] = temp['dependent']
                 if len(words) > 0:
                     sentence = sort_by_position(words)
-                    candidate_tags.append(sentence)
+                    candidate_tag.append(sentence)
             else:
                 words = {}
                 temp = dep
@@ -67,11 +67,9 @@ def extract_candidate_tags(deps):
                 words[temp['dependentGloss']] = temp['dependent']
                 if len(words) > 0:
                     sentence = sort_by_position(words)
-                    candidate_tags.append(sentence)
+                    candidate_tag.append(sentence)
 
-    import pdb; pdb.set_trace()
-
-    return candidate_tags
+    return candidate_tag
 
 
 if __name__ == '__main__':
@@ -79,12 +77,16 @@ if __name__ == '__main__':
         comments = map(lambda comment: comment.strip(), f.readlines())
 
     nlp = StanfordCoreNLP('http://localhost:9000')
+    candidate_tags = []
 
-    sublines = re.split(";|,|\*|\n|\.|，|。|!|\?", list(comments)[0])
-    output = nlp.annotate(sublines[0], properties={
-        'annotators': 'tokenize,ssplit,pos,depparse,parse',
-        'outputFormat': 'json'
-    })
-    deps = output['sentences'][0]['basicDependencies']
-
-    candidate_tags = extract_candidate_tags(deps)
+    for comment in comments:
+        sublines = re.split(";|,|\*|\n|\.|，|。|!|\?", comment)
+        for subline in sublines:
+            output = nlp.annotate(sublines[0], properties={
+                'annotators': 'tokenize,ssplit,pos,depparse,parse',
+                'outputFormat': 'json'
+            })
+            deps = output['sentences'][0]['basicDependencies']
+            candidate_tag = extract_candidate_tag(deps)
+            print(candidate_tag)
+            candidate_tags.append(candidate_tag)
