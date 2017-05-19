@@ -60,16 +60,18 @@ def extract_candidate_tag(deps):
                 if len(words) > 0:
                     sentence = sort_by_position(words)
                     candidate_tag.append(sentence)
-            else:
-                words = {}
-                temp = dep
-                words[temp['governorGloss']] = temp['governor']
-                words[temp['dependentGloss']] = temp['dependent']
-                if len(words) > 0:
-                    sentence = sort_by_position(words)
-                    candidate_tag.append(sentence)
+            #  else:
+                #  import pdb;pdb.set_trace()
+                #  words = {}
+                #  temp = dep
+                #  words[temp['governorGloss']] = temp['governor']
+                #  words[temp['dependentGloss']] = temp['dependent']
+                #  if len(words) > 0:
+                    #  sentence = sort_by_position(words)
+                    #  candidate_tag.append(sentence)
 
-    return candidate_tag
+    if candidate_tag:
+        return candidate_tag
 
 
 if __name__ == '__main__':
@@ -80,13 +82,19 @@ if __name__ == '__main__':
     candidate_tags = []
 
     for comment in comments:
-        sublines = re.split(";|,|\*|\n|\.|，|。|!|\?", comment)
+        #  sublines = re.split(";|,|\*|\n|\.|，|。|!|\?", comment)
+        sublines = re.split("，|。|!|\?", comment)
         for subline in sublines:
-            output = nlp.annotate(sublines[0], properties={
+            if not subline:
+                continue
+            print(subline)
+
+            output = nlp.annotate(subline, properties={
                 'annotators': 'tokenize,ssplit,pos,depparse,parse',
                 'outputFormat': 'json'
             })
             deps = output['sentences'][0]['basicDependencies']
+            print(deps)
             candidate_tag = extract_candidate_tag(deps)
             print(candidate_tag)
             candidate_tags.append(candidate_tag)
