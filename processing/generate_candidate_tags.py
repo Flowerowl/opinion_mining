@@ -4,74 +4,38 @@ import operator
 from utils.corenlp import StanfordCoreNLP
 
 
-def sort_by_position(words):
-    sorted_words = sorted(words.items(), key=operator.itemgetter(1))
-    words = ','.join(dict(sorted_words).keys())
-    return words
+CANDIDATE_TAGS = []
+
+def hook_tags(deps):
+    words = {}
+    for dep in deps:
+        if dep['governorGloss'] not in words:
+            words[dep['governorGloss']] = dep['governor']
+        if dep['dependentGloss'] not in words:
+            words[dep['dependentGloss']] = dep['dependent']
+
+    if len(words) > 0:
+        sorted_words = sorted(words.items(), key=operator.itemgetter(1))
+        tag = ','.join(dict(sorted_words).keys())
+        print(tag)
+        CANDIDATE_TAGS.append(tag)
 
 
-def extract_candidate_tag(deps):
-    candidate_tag = []
-
+def process(deps):
     for i, dep in enumerate(deps):
         if dep['dep'] == 'nsubj':
             if(i<len(deps)-2 and deps[i+1]['dep']=='advmod' and deps[i+2]['dep']=='advmod'):
-                words = {}
-                for j in range(3):
-                    temp = deps[i+j]
-                    if temp['governorGloss'] not in words:
-                        words[temp['governorGloss']] = temp['governor']
-                    if temp['dependentGloss'] not in words:
-                        words[temp['dependentGloss']] = temp['dependent']
-                if len(words) > 0:
-                    sentence = sort_by_position(words)
-                    candidate_tag.append(sentence)
+                hook_tags(deps[i: i+3])
+                del deps[i: i+3]
             elif(i<len(deps)-1 and deps[i+1]['dep']=='advmod'):
-                words = {}
-                for j in range(2):
-                    temp = deps[i+j]
-                    if temp['governorGloss'] not in words:
-                        words[temp['governorGloss']] = temp['governor']
-                    if temp['dependentGloss'] not in words:
-                        words[temp['dependentGloss']] = temp['dependent']
-                if len(words) > 0:
-                    sentence = sort_by_position(words)
-                    candidate_tag.append(sentence)
+                hook_tags(deps[i: i+2])
+                del deps[i: i+2]
         elif(dep['dep']=='advmod'):
-            if(i<len(deps)-1 and deps[i+1]['dep']=='advmod'):
-                words = {}
-                for j in range(2):
-                    temp = deps[i+j]
-                    if temp['governorGloss'] not in words:
-                        words[temp['governorGloss']] = temp['governor']
-                    if temp['dependentGloss'] not in words:
-                        words[temp['dependentGloss']] = temp['dependent']
-                if len(words) > 0:
-                    sentence = sort_by_position(words)
-                    candidate_tag.append(sentence)
-            elif(i<len(deps)-1 and deps[i+1]['dep']=='amod'):
-                words = {}
-                for j in range(2):
-                    temp = deps[i+j]
-                    if temp['governorGloss'] not in words:
-                        words[temp['governorGloss']] = temp['governor']
-                    if temp['dependentGloss'] not in words:
-                        words[temp['dependentGloss']] = temp['dependent']
-                if len(words) > 0:
-                    sentence = sort_by_position(words)
-                    candidate_tag.append(sentence)
-            #  else:
-                #  import pdb;pdb.set_trace()
-                #  words = {}
-                #  temp = dep
-                #  words[temp['governorGloss']] = temp['governor']
-                #  words[temp['dependentGloss']] = temp['dependent']
-                #  if len(words) > 0:
-                    #  sentence = sort_by_position(words)
-                    #  candidate_tag.append(sentence)
-
-    if candidate_tag:
-        return candidate_tag
+            if(i<len(deps)-1 and (deps[i+1]['dep']=='advmod' or deps[i+1]['dep']=='amod')):
+                hook_tags(deps[i: i+2])
+                del deps[i: i+2]
+            else:
+                hook_tags([dep])
 
 
 if __name__ == '__main__':
@@ -79,22 +43,20 @@ if __name__ == '__main__':
         comments = map(lambda comment: comment.strip(), f.readlines())
 
     nlp = StanfordCoreNLP('http://localhost:9000')
-    candidate_tags = []
 
     for comment in comments:
-        #  sublines = re.split(";|,|\*|\n|\.|，|。|!|\?", comment)
         sublines = re.split("，|。|!|\?", comment)
         for subline in sublines:
             if not subline:
                 continue
-            print(subline)
 
             output = nlp.annotate(subline, properties={
                 'annotators': 'tokenize,ssplit,pos,depparse,parse',
                 'outputFormat': 'json'
             })
             deps = output['sentences'][0]['basicDependencies']
-            print(deps)
-            candidate_tag = extract_candidate_tag(deps)
-            print(candidate_tag)
-            candidate_tags.append(candidate_tag)
+            process(deps)
+
+    with open('datasets/candidate_tags.txt', 'w') as f:
+        for tag in CANDIDATE_TAGS:
+            f.write(f"{tag}\n")

@@ -25,9 +25,11 @@ class StanfordCoreNLP:
 
         data = text.encode()
         r = requests.post(
-            self.server_url, params={
+            self.server_url,
+            params={
                 'properties': str(properties)
-            }, data=data, headers={'Connection': 'close'})
+            },
+            data=data, headers={'Connection': 'close'})
         output = r.text
         if ('outputFormat' in properties and properties['outputFormat'] == 'json'):
             try:
