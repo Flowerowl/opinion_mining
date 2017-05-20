@@ -3,7 +3,7 @@ import json
 import requests
 
 
-class StanfordCoreNLP:
+class StanfordCoreNLP(object):
     def __init__(self, server_url):
         if server_url[-1] == '/':
             server_url = server_url[:-1]

@@ -10,7 +10,6 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 if __name__ == '__main__':
     with open('datasets/stopwords.txt', 'r') as f:
         stopwords = set(map(lambda data: data.strip(), f.readlines()))
-
     with open('datasets/training_data.txt', 'r') as f:
         comments = map(lambda comment: comment.strip(), f.readlines())
 

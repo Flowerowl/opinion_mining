@@ -4,14 +4,12 @@ from operator import is_not
 
 def word2vec(candidate_tags, vectors, sentiment_words):
     vecs = []
-    contain_sentiment = False
 
     for tag in candidate_tags:
         vec = []
         for word in tag:
             vec.append(vectors.get(word))
-            if word in sentiment_words:
-                contain_sentiment = True
+            contain_sentiment = True if word in sentiment_words else False
 
         vec = list(filter(partial(is_not, None), vec))
         if vec and contain_sentiment:
