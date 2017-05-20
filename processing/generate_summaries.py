@@ -1,6 +1,7 @@
 from functools import partial
 from operator import is_not
 
+from cluster.dbscan import DBSCAN
 
 def word2vec(candidate_tags, vectors, sentiment_words):
     vecs = []
@@ -30,3 +31,11 @@ if __name__ == '__main__':
         sentiment_words = list(map(lambda word: word.strip(), f))
 
     vecs = word2vec(candidate_tags, vectors, sentiment_words)
+    text = [vec['text'] for vec in vecs]
+    points = [vec['vector'] for vec in vecs]
+
+    model = DBSCAN(points, eps=0.9, min_samples=5)
+    clusters = model.clusters()
+    for index, cluster_id in enumerate(clusters):
+        with open(f'datasets/clusters/{cluster_id}.txt', 'a') as f:
+            f.write(f"{text[index]}\n")
