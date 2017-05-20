@@ -31,9 +31,12 @@ class DBSCAN(object):
             for seed_id in seeds:
                 self.classes[seed_id] = cluster_id
                 neighbors = self.get_neighbors(seed_id)
-                if len(neighors) >= self.min_samples:
-                    for
-
+                if len(neighbors) >= self.min_samples:
+                    for neighbor in neighbors:
+                        if self.classes[neighbor] == UNCLASSIFIED or self.classes[neighbor] == NOISE:
+                            seeds.append(neighbor)
+                        self.classes[neighbor] = cluster_id
+            return True
 
     def get_neighbors(self, point_id):
         seeds = []
